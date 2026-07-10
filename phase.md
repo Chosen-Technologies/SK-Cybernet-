@@ -23,31 +23,31 @@ To achieve a premium, trustworthy fintech appearance, the applications must stri
 **Goal:** Establish the monorepo foundation, build-pipeline, developer tooling, and containerized local services.
 
 ### 0.1 Monorepo & Workspaces
-- `[ ]` Initialize git repository and standard monorepo folder layout.
-- `[ ]` Configure Turborepo (`turbo.json`) to manage task pipelines (build, lint, test) with caching.
-- `[ ]` Configure global `package.json` with npm workspaces.
+- `[x]` Initialize git repository and standard monorepo folder layout.
+- `[x]` Configure Turborepo (`turbo.json`) to manage task pipelines (build, lint, test) with caching.
+- `[x]` Configure global `package.json` with npm workspaces.
 
 ### 0.2 Tooling & Shared Configs
-- `[ ]` Setup shared TypeScript config (`packages/config/typescript`).
-- `[ ]` Setup shared ESLint and Prettier rule packages.
-- `[ ]` Setup Tailwind CSS configuration preset (`packages/config/tailwind`) featuring the core **Blue and White** color theme.
+- `[x]` Setup shared TypeScript config (`packages/config/typescript`).
+- `[x]` Setup shared ESLint and Prettier rule packages.
+- `[x]` Setup Tailwind CSS configuration preset (`packages/config/tailwind`) featuring the core **Blue and White** color theme.
 
 ### 0.3 Application Scaffolding
-- `[ ]` Scaffold Next.js public marketing site: `apps/web` (App Router, TypeScript).
-- `[ ]` Scaffold Next.js user PWA: `apps/app` (App Router, TypeScript, PWA-configured manifest).
-- `[ ]` Scaffold Next.js admin console: `apps/admin` (App Router, TypeScript).
-- `[ ]` Scaffold NestJS API: `apps/api` (TypeScript, module architecture).
+- `[x]` Scaffold Next.js public marketing site: `apps/web` (App Router, TypeScript).
+- `[x]` Scaffold Next.js user PWA: `apps/app` (App Router, TypeScript, PWA-configured manifest).
+- `[x]` Scaffold Next.js admin console: `apps/admin` (App Router, TypeScript).
+- `[x]` Scaffold NestJS API: `apps/api` (TypeScript, module architecture).
 
 ### 0.4 Shared Package Utilities
-- `[ ]` Create `packages/types` to hold API contracts, DTOs, and TS interfaces.
-- `[ ]` Create `packages/utils` for formatting (Naira to Kobo, credits, dates) and shared validators.
-- `[ ]` Create `packages/ui` for common UI components (buttons, input fields using **Inter** font and primary colors).
+- `[x]` Create `packages/types` to hold API contracts, DTOs, and TS interfaces.
+- `[x]` Create `packages/utils` for formatting (Naira to Kobo, credits, dates) and shared validators.
+- `[x]` Create `packages/ui` for common UI components (buttons, input fields using **Inter** font and primary colors).
 
 ### 0.5 Local Dev Environment
-- `[ ]` Create a local `docker-compose.yml` defining:
+- `[x]` Create a local `docker-compose.yml` defining:
     - PostgreSQL database container.
     - Redis cache and job queue container.
-- `[ ]` Create and distribute `.env.example` files containing non-sensitive keys.
+- `[x]` Create and distribute `.env.example` files containing non-sensitive keys.
 
 ---
 
