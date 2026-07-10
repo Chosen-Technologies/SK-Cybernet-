@@ -2,7 +2,7 @@
 
 Product of Chosen Technologies
 
-SK Cybernet is a decentralized subscription and hub-access system for flexible workspace usage. Instead of locking users into rigid subscription plans, the platform lets users fund a wallet, automatically converts verified funding into credits, and allows those credits to be redeemed for Daily, Weekly, or Monthly hub access coupons.
+SK Cybernet is a decentralized subscription and hub-access system for flexible workspace usage. Instead of locking users into rigid subscription plans, the platform lets users fund a wallet, automatically converts verified funding into credits, and allows those credits to be redeemed for Daily, Weekly, or Monthly hub bookings. Upon arriving at a hub, users check in by presenting their booking QR code, which triggers the automatic generation of a 10-digit numeric internet access coupon code.
 
 The product is designed as a secure, mobile-first fintech-style experience for users and an operational control system for administrators.
 
@@ -12,8 +12,9 @@ SK Cybernet gives each user a financial and access identity inside the platform:
 
 - A secure user account.
 - A wallet funded through Paystack.
-- Automatic conversion of settled wallet funding into platform credits.
-- Credit redemption for access coupons.
+- Automatic conversion of settled wallet funding into platform credits (which act as a simple internal cash-like balance).
+- Credit redemption for hub subscription bookings (Daily, Weekly, Monthly).
+- Generation of a 10-digit numeric internet access coupon code upon hub check-in.
 - Pre-booked hub access with Pass IDs and QR verification.
 - Transparent transaction history.
 - Admin oversight for accounts, disputes, student verification, bookings, and financial activity.
@@ -36,17 +37,17 @@ The public web-facing marketing site. It should contain long-form content, SEO-f
 
 ### `apps/app`
 
-The main installable user PWA. This is the customer-facing product for onboarding, wallet funding, credit balance, coupon redemption, booking, passes, and transaction history.
+The main installable user PWA. This is the customer-facing product for onboarding, wallet funding, credit balance, hub bookings, passes, retrieved internet access coupons, and transaction history.
 
 The UI direction is fintech-first, inspired by Raenest and Moneipoint, with Raenest preferred. The main dashboard should use white and dark blue as primary colors, show a prominent balance card, action icons, recent transactions, quick actions, and bottom navigation. Emojis should not be used in the interface.
 
 ### `apps/admin`
 
-The internal admin console for operational staff. It should support user monitoring, wallet and transaction review, student verification, dispute resolution, coupon management, booking visibility, account flagging, and audit logs.
+The internal admin console for operational staff. It should support user monitoring, wallet and transaction review, student verification, dispute resolution, scanning check-in QR codes, booking visibility, account flagging, and audit logs.
 
 ### `apps/api`
 
-The backend API. It owns authentication, wallet logic, payment verification, automatic credit conversion, coupon redemption, bookings, transactions, disputes, uploads, notifications, and admin workflows.
+The backend API. It owns authentication, wallet logic, payment verification, automatic credit conversion, hub bookings, internet connection access coupon generation, transactions, disputes, uploads, notifications, and admin workflows.
 
 ## Core User Flow
 
@@ -56,10 +57,11 @@ The backend API. It owns authentication, wallet logic, payment verification, aut
 4. User sets a 6-digit login PIN.
 5. User sets a 4-digit payment PIN.
 6. User funds wallet through Paystack.
-7. Verified funding is automatically converted into credits.
-8. User redeems credits for Daily, Weekly, or Monthly coupons.
-9. User books hub access and receives a Pass ID/QR credential.
-10. User and admin can view the transaction trail.
+7. Verified funding is automatically converted into credits (acting as internal currency).
+8. User redeems credits for Daily, Weekly, or Monthly hub subscription bookings and receives a Pass ID/QR pass.
+9. User arrives at the hub and presents the QR pass; the admin scans it to check them in.
+10. The check-in triggers the automatic generation of a 10-digit numeric internet access coupon for the user.
+11. User and admin can view the transaction ledger and access logs.
 
 ## Technology Direction
 

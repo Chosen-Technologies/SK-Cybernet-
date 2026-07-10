@@ -7,13 +7,13 @@ Document purpose: Engineering implementation reference
 
 ## 1. Overview
 
-SK Cybernet is a mobile-first Progressive Web App (PWA) for flexible hub and workspace access. The platform replaces rigid subscription plans with a wallet-funded credit system. Users fund a wallet, settled balances are automatically converted into platform credits, users redeem those credits for Daily, Weekly, or Monthly access coupons, and receive booking passes that can be scanned or verified at the hub.
+SK Cybernet is a mobile-first Progressive Web App (PWA) for flexible hub and workspace access. The platform replaces rigid subscription plans with a wallet-funded credit system. Users fund a wallet, settled balances are automatically converted into platform credits, users redeem those credits for Daily, Weekly, or Monthly hub bookings, and receive passes with a QR code. When the admin scans this QR code upon the user's arrival at the hub, the system automatically generates a 10-digit internet connection access coupon code.
 
 The system has three primary surfaces:
 
 - Marketing Site: public web-facing site with long-form content, product education, pricing explanation, FAQs, trust pages, and calls to action into the PWA.
-- User PWA: fintech-style application for onboarding, wallet funding, automatic credit balance, coupon redemption, booking, pass management, transaction history, and account security.
-- Admin Console: internal operations system for account monitoring, student verification, wallet and transaction oversight, dispute resolution, booking visibility, and account flagging or suspension.
+- User PWA: fintech-style application for onboarding, wallet funding, available credit balance, booking creation, pass management, internet access coupon retrieval, transaction history, and account security.
+- Admin Console: internal operations system for account monitoring, student verification, wallet and transaction oversight, dispute resolution, booking visibility, QR-based check-in verification (which auto-generates 10-digit internet access coupons), and account flagging or suspension.
 
 The system must be implemented with security, traceability, payment reliability, and operational control as first-class concerns.
 
@@ -51,61 +51,59 @@ Wallet funding must be confirmed through trusted Paystack webhooks before value 
 
 ### 2.3 Credits
 
-Credits are the platform's internal access currency. Users do not manually buy credits as a separate checkout step. Instead, every verified wallet funding event automatically increases the user's available credit balance, similar to how a banking ledger posts settled value into an account.
+Credits are the platform's internal access currency. Users do not manually buy credits as a separate checkout step. Instead, every verified wallet funding event automatically increases the user's available credit balance, similar to how a banking ledger posts settled value into an account. Credits act directly as an internal tender equivalent to the deposited funds, without the complex regulations of physical currency. Since credits are a simple, fungible balance rather than distinct bundles, they do not have individual status states (like redeemed or active) or credit-specific expiry dates.
 
-Each auto-converted funding bundle should receive a unique human-readable credit reference code. The charter repeatedly references 6-digit credit codes, so implementation should default to 6 digits unless the business finalizes a different length.
+### 2.4 Hub Subscriptions
 
-Credit status values:
-
-- `active`
-- `partially_redeemed`
-- `redeemed`
-- `expired`
-- `voided`
-
-### 2.4 Coupons
-
-Coupons define access tiers:
+Hub subscriptions define the access tiers for booking space in the hub:
 
 - Daily
 - Weekly
 - Monthly
 
-Each coupon has:
+Each subscription tier has:
 
-- Type.
+- Type (Daily, Weekly, Monthly).
 - Credit cost.
 - Validity duration.
 - Student discount rule.
 - Expiry policy.
 - Redemption limits.
 
-Coupon pricing should be managed from the backend or admin console, not hardcoded into the frontend.
+Subscription pricing must be managed from the backend or admin console, not hardcoded into the frontend.
 
-### 2.5 Booking And Passes
+### 2.5 Internet Connection Access Coupons
 
-When a user redeems credits for a coupon, the system creates a booking and issues a Pass ID.
+Coupons are 10-digit numeric codes that grant users internet access at the hub. 
+- Users do not purchase these codes directly with credits.
+- Instead, when a user arrives at the hub and their booking QR code is scanned by an admin, the system checks the user in and automatically generates a unique 10-digit coupon code.
+- The validity duration and usage limits of the generated coupon correspond directly to the hub subscription tier associated with the booking.
+
+### 2.6 Booking And Passes
+
+When a user redeems credits for a hub subscription, the system creates a booking and issues a Pass ID.
 
 Each booking must include:
 
 - User reference.
-- Coupon reference.
+- Subscription tier reference.
 - Credits consumed.
 - Start date and end date.
 - Pass ID.
 - QR payload.
+- Associated Coupon reference (the auto-generated 10-digit internet access code, generated upon check-in).
 - Booking status.
 
 Booking status values:
 
 - `pending`
 - `confirmed`
-- `checked_in`
+- `checked_in` (admin has scanned the QR code, which triggers the generation of the 10-digit internet access coupon code)
 - `cancelled`
 - `expired`
 - `refunded`
 
-### 2.6 Transaction History
+### 2.7 Transaction History
 
 Every wallet, credit, coupon, booking, refund, and dispute action must be recorded in a unified ledger.
 
@@ -463,46 +461,32 @@ Webhook rules:
 
 Responsibilities:
 
-- Automatic credit issuance from settled wallet funding.
-- 6-digit code generation.
-- Credit ownership.
-- Credit status.
+- Automatic credit issuance (conversion) from settled wallet funding.
+- Credit balance tracking per wallet.
 - Credit ledger.
-- Expiry rules.
 
-Code generation:
-
-- Generate a numeric code.
-- Check uniqueness among active codes.
-- Retry on collision.
-- Store only after a verified settlement event is ready to be posted to the user's credit balance.
-
-For stronger uniqueness, pair the 6-digit public code with an internal UUID.
+Since credits represent deposited funds and behave like standard bank account balances, there are no credit reference codes, credit status fields, or expiry rules. Credits are fungible.
 
 ### 4.6 Coupons Module
 
 Responsibilities:
 
-- Daily, Weekly, and Monthly coupon definitions.
-- Credit cost rules.
-- Student discount handling.
-- Coupon activation/deactivation.
-- Redemption policy.
-
-Implementation note:
-
-Coupon pricing should be data-driven. Admins should eventually be able to update coupon costs without deploying code.
+- Generation of unique 10-digit internet connection access codes upon booking check-in.
+- Association of coupon codes to specific checked-in bookings and users.
+- Tracking coupon validity and status (active, expired, voided).
 
 ### 4.7 Booking Module
 
 Responsibilities:
 
-- Coupon redemption into bookings.
-- Pass ID generation.
-- QR payload generation.
+- Definition of Daily, Weekly, and Monthly hub subscription tiers.
+- Subscription credit cost rules and student discount handling.
+- Subscription pricing management (data-driven, adjustable by admins).
+- Booking creation upon credit redemption.
+- Pass ID and QR payload generation.
 - Booking validity windows.
 - Cancellation and refund rules.
-- Check-in verification.
+- Check-in verification: scanning the booking QR code to transition status to `checked_in`, which triggers the Coupons Module to auto-generate the 10-digit internet access coupon.
 
 Pass ID recommendation:
 
@@ -634,28 +618,24 @@ Fields:
 - `createdAt`
 - `updatedAt`
 
-### 5.4 CreditBundle
+### 5.4 Coupon (Internet Access Coupon)
 
 Fields:
 
 - `id`
+- `bookingId`
 - `userId`
-- `publicCode`
-- `sourceTransactionId`
-- `fundingAmountKobo`
-- `initialCredits`
-- `remainingCredits`
-- `exchangeRate`
-- `status`
+- `code` (10-digit numeric internet access code)
+- `status` (active, expired, voided)
 - `expiresAt`
 - `createdAt`
 
-### 5.5 Coupon
+### 5.5 HubSubscriptionTier
 
 Fields:
 
 - `id`
-- `type`
+- `type` (Daily, Weekly, Monthly)
 - `name`
 - `creditCost`
 - `studentCreditCost`
@@ -669,12 +649,13 @@ Fields:
 
 - `id`
 - `userId`
-- `couponId`
+- `subscriptionTierId` (refers to HubSubscriptionTier)
 - `passId`
 - `qrPayload`
 - `startsAt`
 - `endsAt`
-- `status`
+- `status` (pending, confirmed, checked_in, cancelled, expired, refunded)
+- `couponId` (refers to Coupon, null until checked in)
 - `createdAt`
 
 ### 5.7 Transaction
@@ -747,36 +728,44 @@ Required route behavior:
 8. Backend starts a database transaction.
 9. Backend records the naira funding transaction.
 10. Backend converts the settled amount into credits using the active exchange rate.
-11. Backend generates a unique credit reference code.
-12. Backend creates the credit bundle.
-13. Backend updates the user's available credit balance.
-14. Backend records the credit conversion ledger entry.
-15. Database transaction commits.
-16. User receives funding and credit-posting confirmation.
+11. Backend updates the user's available credit balance.
+12. Backend records the credit conversion ledger entry.
+13. Database transaction commits.
+14. User receives funding and credit-posting confirmation.
 
 ### 6.3 Automatic Credit Conversion Rules
 
 1. Credits are posted only after verified settlement.
-2. The exchange rate used for each conversion is stored with the credit bundle and transaction record.
+2. The exchange rate used for each conversion is stored with the transaction record.
 3. If funding is placed in escrow, credits must either remain unavailable or be posted as escrowed credits until release.
 4. Duplicate Paystack events must not create duplicate credits.
 5. Refunded or reversed funding must create reversal ledger entries and reduce available or escrowed credits according to the refund policy.
 6. Manual admin adjustments must include a reason, actor, and audit record.
 
-### 6.4 Booking Flow
+### 6.4 Hub Space Booking Flow
 
-1. User selects coupon tier.
-2. Backend calculates credit cost.
+1. User selects hub subscription tier (Daily, Weekly, or Monthly).
+2. Backend calculates credit cost (applying student discount if verified).
 3. User chooses booking date window.
-4. User confirms with payment PIN.
+4. User confirms booking with payment PIN.
 5. Backend validates available credits.
 6. Backend consumes credit value.
-7. Backend creates booking.
+7. Backend creates booking in `pending` or `confirmed` status.
 8. Backend generates Pass ID and QR payload.
-9. Ledger transaction is recorded.
-10. Booking appears in the user's passes.
+9. Ledger transaction is recorded for the booking creation.
+10. Booking appears in the user's passes screen in the PWA.
 
-### 6.5 Admin Dispute Resolution Flow
+### 6.5 Hub Check-In and Internet Coupon Flow
+
+1. User arrives at the hub and presents their booking pass QR code from `apps/app`.
+2. Hub admin scans the QR code using the `apps/admin` portal.
+3. Backend verifies the booking (status is `confirmed` and current time is within booking validity).
+4. Backend updates the booking status to `checked_in`.
+5. Backend automatically generates a unique 10-digit internet connection access coupon code.
+6. Backend associates the generated coupon code with the booking and the user.
+7. User receives the 10-digit coupon code via notification (SMS/Email/PWA push) and it is displayed under their active pass details in `apps/app`.
+
+### 6.6 Admin Dispute Resolution Flow
 
 1. Admin opens dispute queue.
 2. Admin reviews transaction, wallet state, Paystack metadata, and user history.
@@ -838,9 +827,9 @@ Core pages:
 - Home.
 - How it works.
 - Wallet and credits explainer.
-- Coupon tiers and pricing.
+- Hub subscription tiers and pricing.
 - Student discount.
-- Hub access and booking.
+- Hub booking and check-in flow.
 - Security and trust.
 - FAQs.
 - About Chosen Technologies.
@@ -849,9 +838,9 @@ Core pages:
 
 Content requirements:
 
-- Use clear long-form sections that explain wallet funding, automatic credit conversion, coupons, bookings, Pass IDs, student verification, and security.
+- Use clear long-form sections that explain wallet funding, automatic credit conversion, hub subscriptions, bookings, check-in, internet connection access coupons, student verification, and security.
 - Include strong calls to action into `apps/app` signup and login.
-- Keep public pricing and credit explanations consistent with backend coupon configuration.
+- Keep public pricing and credit explanations consistent with backend subscription configuration.
 - Optimize metadata, page titles, descriptions, and structured content for search visibility.
 
 ### 8.2 User PWA: `apps/app`
@@ -868,9 +857,9 @@ Core screens:
 - Fund wallet.
 - Credit balance.
 - Credit history.
-- Coupon selection.
+- Hub subscription tier selection.
 - Booking calendar.
-- My passes.
+- My passes (including active, upcoming, and checked-in passes showing generated internet coupons).
 - Pass QR detail.
 - Transaction history.
 - Security settings.
@@ -976,8 +965,8 @@ Rules:
 Cover:
 
 - Post-OAuth onboarding status transitions.
-- Coupon pricing.
-- Credit code generation.
+- Hub subscription pricing.
+- 10-digit internet access coupon code generation.
 - PIN validation.
 - Funding-to-credit conversion calculations.
 - Credit balance calculations.
@@ -992,8 +981,8 @@ Cover:
 - Onboarding route guards.
 - Wallet funding webhook handling.
 - Automatic credit conversion transaction.
-- Coupon redemption.
-- Booking creation.
+- Hub subscription booking creation.
+- Check-in scanning and internet coupon generation.
 - Dispute resolution.
 - Admin authorization.
 
@@ -1006,7 +995,7 @@ Cover:
 - PIN setup.
 - Wallet funding mock flow.
 - Automatic credit posting.
-- Booking and pass generation.
+- Booking, pass generation, check-in, and internet coupon code issuance.
 - Admin student verification.
 - Admin dispute resolution.
 
@@ -1141,7 +1130,6 @@ Tasks:
 - Add wallet funding ledger entries.
 - Add configurable credit-to-naira exchange rate.
 - Add automatic funding-to-credit conversion.
-- Generate credit reference codes after verified settlement.
 - Post available or escrowed credits based on settlement state.
 - Add escrow balance support.
 - Build `apps/app` wallet dashboard and funding UI.
@@ -1150,44 +1138,43 @@ Deliverable:
 
 - Users can fund wallets through Paystack, and verified payments automatically post credits through server-side ledger logic.
 
-## Phase 4: Credits And Coupons
+## Phase 4: Credits And Hub Subscriptions
 
-Goal: Manage credit balances and redeem credits for access coupons.
+Goal: Manage credit balances and configure hub subscription tiers.
 
 Tasks:
 
 - Implement credit balance views and history.
-- Implement credit bundle lifecycle rules.
-- Record credit conversion and redemption ledger entries.
-- Record ledger entries.
-- Implement coupon definitions.
-- Implement coupon pricing and student discount logic.
+- Record credit conversion ledger entries.
+- Record subscription/booking redemption ledger entries.
+- Implement hub subscription definitions (Daily, Weekly, Monthly).
+- Implement subscription pricing and student discount logic.
 - Build `apps/app` credit wallet UI.
-- Build `apps/app` coupon selection UI.
+- Build `apps/app` subscription tier selection UI.
 
 Deliverable:
 
-- Users can view posted credits and redeem them against active coupon options based on current pricing.
+- Users can view posted credits and select hub subscription tiers based on current pricing.
 
-## Phase 5: Booking And Pass IDs
+## Phase 5: Booking, Passes, and Internet Coupons
 
-Goal: Allow users to redeem credits for access bookings.
+Goal: Allow users to book space, check in, and receive internet access coupons.
 
 Tasks:
 
-- Implement booking creation.
-- Implement credit consumption.
-- Generate Pass IDs.
-- Generate QR payloads.
-- Add booking status lifecycle.
-- Add booking cancellation policy hooks.
+- Implement booking creation and credit consumption.
+- Generate Pass IDs and QR payloads.
+- Add booking status lifecycle (pending, confirmed, checked_in, cancelled, expired, refunded).
+- Implement QR scanning check-in endpoint for admins.
+- Implement 10-digit internet connection access coupon generation upon check-in.
+- Add booking cancellation/refund policies.
 - Build `apps/app` booking calendar.
 - Build `apps/app` My Passes screen.
-- Build `apps/app` Pass QR detail screen.
+- Build `apps/app` Pass QR detail screen showing checked-in internet coupons.
 
 Deliverable:
 
-- Users can redeem credits for Daily, Weekly, or Monthly bookings and receive scannable passes.
+- Users can book space, admins can check them in via QR scan, and users receive an automated 10-digit internet access coupon upon check-in.
 
 ## Phase 6: Admin Console
 
@@ -1318,8 +1305,8 @@ The first usable MVP should include:
 - Paystack card funding.
 - Paystack webhook verification.
 - Automatic credit conversion after verified funding.
-- Daily, Weekly, and Monthly coupons.
-- Booking and Pass ID generation.
+- Daily, Weekly, and Monthly hub subscriptions.
+- Booking, Pass ID, and check-in QR scanning with 10-digit internet access coupon generation.
 - User transaction history.
 - Public marketing site with home, how-it-works, pricing, student discount, FAQ, and trust/security pages.
 - Basic admin dashboard.
@@ -1332,12 +1319,10 @@ Dedicated Virtual Accounts, direct debit, push notifications, advanced reconcili
 Before implementation, the business should finalize:
 
 - Credit-to-naira exchange rate.
-- Whether credit public codes are 6 digits, 10 digits, or another format.
-- Daily, Weekly, and Monthly coupon costs.
+- Daily, Weekly, and Monthly hub subscription costs.
 - Student discount percentage or fixed discounted price.
-- Credit expiry policy.
-- Coupon expiry policy.
 - Booking cancellation and refund policy.
+- Internet connection access coupon validity/expiry rules.
 - Escrow release rules.
 - Whether student verification is manual, automated, or hybrid.
 - Pass ID format.
