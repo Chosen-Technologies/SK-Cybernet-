@@ -1,0 +1,273 @@
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+enum UserRole {
+  user
+  admin
+  super_admin
+  support
+}
+
+enum OnboardingStatus {
+  incomplete
+  complete
+}
+
+enum StudentStatus {
+  unverified
+  pending_review
+  verified
+  rejected
+}
+
+enum BookingStatus {
+  pending
+  confirmed
+  checked_in
+  cancelled
+  expired
+  refunded
+}
+
+enum TransactionType {
+  wallet_funding
+  wallet_escrow_hold
+  wallet_escrow_release
+  credit_conversion
+  coupon_redemption
+  booking_creation
+  booking_refund
+  admin_adjustment
+  dispute_resolution
+}
+
+enum TransactionDirection {
+  in
+  out
+}
+
+enum TransactionStatus {
+  pending
+  successful
+  failed
+  reversed
+  disputed
+}
+
+enum CouponStatus {
+  active
+  expired
+  voided
+}
+
+enum DisputeStatus {
+  open
+  under_review
+  resolved_approved
+  resolved_rejected
+  refunded
+}
+
+enum HubSubscriptionType {
+  Daily
+  Weekly
+  Monthly
+}
+
+model User {
+  id               String           @id @default(uuid())
+  email            String           @unique
+  phone            String?          @unique
+  fullName         String
+  role             UserRole         @default(user)
+  authProvider     String           @default("local") // "google" | "local"
+  onboardingStatus OnboardingStatus @default(incomplete)
+  studentStatus    StudentStatus    @default(unverified)
+  isSuspended      Boolean          @default(false)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  auth                  Auth?
+  wallet                Wallet?
+  bookings              Booking[]
+  coupons               Coupon[]
+  transactions          Transaction[]
+  disputes              Dispute[]             @relation("UserDisputes")
+  handledDisputes       Dispute[]             @relation("AdminDisputes")
+  studentVerifications  StudentVerification[] @relation("UserVerifications")
+  reviewedVerifications StudentVerification[] @relation("ReviewedVerifications")
+  auditLogs             AuditLog[]
+
+  @@map("users")
+}
+
+model Auth {
+  id                       String    @id @default(uuid())
+  userId                   String    @unique
+  user                     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  passwordHash             String?
+  passwordSetAt            DateTime?
+  loginPinHash             String?
+  paymentPinHash           String?
+  phoneVerifiedAt          DateTime?
+  loginPinSetAt            DateTime?
+  paymentPinSetAt          DateTime?
+  lastPinChangedAt         DateTime?
+  failedLoginAttempts      Int       @default(0)
+  failedPaymentPinAttempts Int       @default(0)
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
+
+  @@map("auth_credentials")
+}
+
+model Wallet {
+  id                        String   @id @default(uuid())
+  userId                    String   @unique
+  user                      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  availableCredits          Float    @default(0.0)
+  escrowedCredits           Float    @default(0.0)
+  totalSettledFundingKobo   Int      @default(0)
+  totalEscrowedFundingKobo  Int      @default(0)
+  currency                  String   @default("NGN")
+  creditExchangeRate        Float    @default(100.0)
+  paystackCustomerCode      String?
+  virtualAccountReference   String?
+  createdAt                 DateTime @default(now())
+  updatedAt                 DateTime @updatedAt
+
+  transactions              Transaction[]
+
+  @@map("wallets")
+}
+
+model Subscription {
+  id                 String             @id @default(uuid())
+  type               HubSubscriptionType
+  name               String
+  creditCost         Float
+  studentCreditCost  Float
+  validityDays       Int
+  isActive           Boolean            @default(true)
+  createdAt          DateTime           @default(now())
+  updatedAt          DateTime           @updatedAt
+
+  bookings           Booking[]
+
+  @@map("subscriptions")
+}
+
+model Booking {
+  id                 String        @id @default(uuid())
+  userId             String
+  user               User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subscriptionTierId String
+  subscriptionTier   Subscription  @relation(fields: [subscriptionTierId], references: [id])
+  passId             String        @unique
+  qrPayload          String
+  startsAt           DateTime
+  endsAt             DateTime
+  status             BookingStatus @default(pending)
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  coupon             Coupon?
+  transactions       Transaction[]
+
+  @@map("bookings")
+}
+
+model Coupon {
+  id        String       @id @default(uuid())
+  bookingId String       @unique
+  booking   Booking      @relation(fields: [bookingId], references: [id], onDelete: Cascade)
+  userId    String
+  user      User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  code      String       @unique // 10-digit numeric code
+  status    CouponStatus @default(active)
+  expiresAt DateTime
+  createdAt DateTime     @default(now())
+  updatedAt DateTime     @updatedAt
+
+  @@map("coupons")
+}
+
+model Transaction {
+  id                String               @id @default(uuid())
+  userId            String
+  user              User                 @relation(fields: [userId], references: [id], onDelete: Cascade)
+  walletId          String
+  wallet            Wallet               @relation(fields: [walletId], references: [id], onDelete: Cascade)
+  type              TransactionType
+  direction         TransactionDirection
+  amount            Int                  @default(0) // In kobo
+  creditAmount      Float                @default(0.0)
+  currency          String               @default("NGN")
+  status            TransactionStatus
+  provider          String?              // e.g. "paystack"
+  providerReference String?              @unique
+  metadata          Json?
+  bookingId         String?
+  booking           Booking?             @relation(fields: [bookingId], references: [id], onDelete: SetNull)
+  createdAt         DateTime             @default(now())
+  updatedAt         DateTime             @updatedAt
+
+  dispute           Dispute?
+
+  @@map("transactions")
+}
+
+model Dispute {
+  id               String        @id @default(uuid())
+  transactionId    String        @unique
+  transaction      Transaction   @relation(fields: [transactionId], references: [id], onDelete: Cascade)
+  userId           String
+  user             User          @relation("UserDisputes", fields: [userId], references: [id], onDelete: Cascade)
+  status           DisputeStatus @default(open)
+  reason           String
+  resolutionNotes  String?
+  handledByAdminId String?
+  handledByAdmin   User?         @relation("AdminDisputes", fields: [handledByAdminId], references: [id], onDelete: SetNull)
+  createdAt        DateTime      @default(now())
+  resolvedAt       DateTime?
+  updatedAt        DateTime      @updatedAt
+
+  @@map("disputes")
+}
+
+model StudentVerification {
+  id               String        @id @default(uuid())
+  userId           String
+  user             User          @relation("UserVerifications", fields: [userId], references: [id], onDelete: Cascade)
+  fileUrl          String
+  fileType         String
+  fileSize         Int
+  status           StudentStatus @default(pending_review)
+  rejectionReason  String?
+  reviewedById     String?
+  reviewedBy       User?         @relation("ReviewedVerifications", fields: [reviewedById], references: [id], onDelete: SetNull)
+  reviewedAt       DateTime?
+  createdAt        DateTime      @default(now())
+  updatedAt        DateTime      @updatedAt
+
+  @@map("student_verifications")
+}
+
+model AuditLog {
+  id        String   @id @default(uuid())
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  ipAddress String?
+  userAgent String?
+  metadata  Json?
+  createdAt DateTime @default(now())
+
+  @@map("audit_logs")
+}
