@@ -56,21 +56,21 @@ To achieve a premium, trustworthy fintech appearance, the applications must stri
 **Goal:** Establish database schemas, ORM migrations, connection pooling, and the core NestJS API framework.
 
 ### 1.1 Prisma Setup & Migrations
-- `[ ]` Install Prisma in `apps/api` and link to the monorepo.
-- `[ ]` Write the schema definition (`schema.prisma`) mapping all entities (User, Auth, Wallet, Subscription, Booking, Coupon, Transaction, Dispute, StudentVerification, AuditLog).
-- `[ ]` Create initial database migration and apply it to the local PostgreSQL container.
+- `[x]` Install Prisma in `apps/api` and link to the monorepo.
+- `[x]` Write the schema definition (`schema.prisma`) mapping all entities (User, Auth, Wallet, Subscription, Booking, Coupon, Transaction, Dispute, StudentVerification, AuditLog).
+- `[x]` Create initial database migration and apply it to the local PostgreSQL container.
 
 ### 1.2 Data Seeding
-- `[ ]` Implement a database seed script to insert initial hub subscription tiers:
+- `[x]` Implement a database seed script to insert initial hub subscription tiers:
     - **Daily Subscription**
     - **Weekly Subscription**
     - **Monthly Subscription**
-- `[ ]` Set up script run validation during local Docker spin-ups.
+- `[x]` Set up script run validation during local Docker spin-ups.
 
 ### 1.3 NestJS Core Infrastructure
-- `[ ]` Configure NestJS database connection module with Prisma.
-- `[ ]` Implement global filters (for consistent API error responses) and pipes (validation).
-- `[ ]` Integrate Swagger (OpenAPI) for automated API route documentation.
+- `[x]` Configure NestJS database connection module with Prisma.
+- `[x]` Implement global filters (for consistent API error responses) and pipes (validation).
+- `[x]` Integrate Swagger (OpenAPI) for automated API route documentation.
 
 ---
 
@@ -79,31 +79,31 @@ To achieve a premium, trustworthy fintech appearance, the applications must stri
 **Goal:** Create secure onboarding flows, SMS OTP verification, PIN handling, and Next.js/NestJS auth state integration.
 
 ### 2.1 Basic Authentication Core
-- `[ ]` Create database entities and hashing helpers (using Argon2/bcrypt) for passwords.
-- `[ ]` Build email/password registration and login endpoints.
-- `[ ]` Build Google OAuth integration on the NestJS backend and PWA client.
+- `[x]` Create database entities and hashing helpers (using Argon2/bcrypt) for passwords.
+- `[x]` Build email/password registration and login endpoints.
+- `[x]` Build Google OAuth integration on the NestJS backend and PWA client.
 
 ### 2.2 Onboarding Completion Guards
-- `[ ]` Implement backend checks that verify if user has completed all onboarding requirements:
+- `[x]` Implement backend checks that verify if user has completed all onboarding requirements:
     1. Set account password (for Google OAuth users).
     2. Verify phone number via SMS OTP.
     3. Setup 6-digit Login PIN.
     4. Setup 4-digit Payment PIN.
-- `[ ]` Build NestJS router guards that intercept all profile, wallet, and booking requests if onboarding is incomplete.
+- `[x]` Build NestJS router guards that intercept all profile, wallet, and booking requests if onboarding is incomplete.
 
 ### 2.3 Redis-Backed OTP Verification
-- `[ ]` Implement Redis-based OTP generator (6-digit, 5-minute expiry).
-- `[ ]` Add SMS provider service mock/stub on backend.
-- `[ ]` Enforce rate-limiting for OTP requests (e.g. maximum 1 request per minute).
+- `[x]` Implement Redis-based OTP generator (6-digit, 5-minute expiry).
+- `[x]` Add SMS provider service mock/stub on backend.
+- `[x]` Enforce rate-limiting for OTP requests (e.g. maximum 1 request per minute).
 
 ### 2.4 PIN Security
-- `[ ]` Implement endpoints to set and verify the 6-digit Login PIN and 4-digit Payment PIN.
-- `[ ]` Ensure PIN inputs are never stored in plaintext and never logged.
-- `[ ]` Create a Redis-based attempt tracker to lock accounts after 5 consecutive failed PIN entries.
+- `[x]` Implement endpoints to set and verify the 6-digit Login PIN and 4-digit Payment PIN.
+- `[x]` Ensure PIN inputs are never stored in plaintext and never logged.
+- `[x]` Create a Redis-based attempt tracker to lock accounts after 5 consecutive failed PIN entries.
 
 ### 2.5 User PWA Onboarding UI
-- `[ ]` Build the auth flow interface using the **Inter** font, featuring clean input fields.
-- `[ ]` Build password setup, OTP confirmation screen, Login PIN setup, and Payment PIN setup screens.
+- `[x]` Build the auth flow interface using the **Inter** font, featuring clean input fields.
+- `[x]` Build password setup, OTP confirmation screen, Login PIN setup, and Payment PIN setup screens.
 
 ---
 

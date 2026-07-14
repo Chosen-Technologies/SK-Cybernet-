@@ -4,9 +4,19 @@ import { AppModule } from './app.module';
 import { ValidationPipe } from '@nestjs/common';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
+import cookieParser from 'cookie-parser';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  app.enableCors({
+    origin: [process.env.WEB_BASE_URL, process.env.APP_BASE_URL, process.env.ADMIN_BASE_URL].filter(
+      (origin): origin is string => !!origin,
+    ),
+    credentials: true,
+  });
+
+  app.use(cookieParser());
 
   app.useGlobalPipes(
     new ValidationPipe({
