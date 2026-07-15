@@ -2,10 +2,17 @@
 
 import React from 'react';
 import { useAuth } from '@/features/auth/auth-context';
-import { Wallet, LogOut, ShieldAlert, Award, User } from 'lucide-react';
+import { Wallet, ShieldAlert, User, Headphones, Bell } from 'lucide-react';
+
+function getInitials(fullName?: string) {
+  if (!fullName) return '';
+  const parts = fullName.trim().split(/\s+/);
+  const initials = parts.length > 1 ? `${parts[0][0]}${parts[parts.length - 1][0]}` : parts[0].slice(0, 2);
+  return initials.toUpperCase();
+}
 
 export default function DashboardPage() {
-  const { user, logout, loading } = useAuth();
+  const { user, loading } = useAuth();
 
   if (loading) {
     return (
@@ -27,20 +34,25 @@ export default function DashboardPage() {
       {/* Top Navbar */}
       <header className="bg-slate-900 text-white shadow-md">
         <div className="max-w-6xl mx-auto flex items-center justify-between px-6 py-4">
-          <div className="flex items-center gap-2">
-            <Award className="h-6 w-6 text-blue-400" />
-            <h1 className="font-heading font-bold text-xl tracking-tight">SK Cybernet</h1>
+          <div className="flex items-center gap-3">
+            <div className="h-10 w-10 rounded-full bg-blue-500 flex items-center justify-center text-sm font-bold text-white shrink-0">
+              {getInitials(user.fullName) || <User className="h-5 w-5" />}
+            </div>
+            <span className="text-sm font-semibold text-white">Hello, {user.fullName}</span>
           </div>
-          <div className="flex items-center gap-4">
-            <span className="hidden sm:inline-block text-sm text-slate-300 font-medium">
-              Hello, {user.fullName}
-            </span>
+          <div className="flex items-center gap-2">
             <button
-              onClick={logout}
-              className="flex items-center gap-1 bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-white px-3 py-1.5 rounded-lg border border-slate-700 text-xs font-semibold transition-colors"
+              aria-label="Contact support"
+              className="h-9 w-9 flex items-center justify-center rounded-lg text-slate-300 hover:text-white transition-colors"
             >
-              <LogOut className="h-3.5 w-3.5" />
-              Sign Out
+              <Headphones className="h-4 w-4" />
+            </button>
+            <button
+              aria-label="Notifications"
+              className="relative h-9 w-9 flex items-center justify-center rounded-lg text-slate-300 hover:text-white transition-colors"
+            >
+              <Bell className="h-4 w-4" />
+              <span className="absolute top-1.5 right-1.5 h-1.5 w-1.5 rounded-full bg-red-500"></span>
             </button>
           </div>
         </div>

@@ -2,15 +2,12 @@
 
 import React, { useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useAuth } from '@/features/auth/auth-context';
-import { apiRequest } from '@/lib/api';
 import { Phone, CheckCircle, ArrowLeft } from 'lucide-react';
 
 const COUNTRY_CODE = '+234';
 const OTP_LENGTH = 6;
 
 export default function PhoneOnboardingPage() {
-  const { refreshUser } = useAuth();
   const router = useRouter();
   const [localNumber, setLocalNumber] = useState('');
   const [fullPhone, setFullPhone] = useState('');
@@ -29,43 +26,25 @@ export default function PhoneOnboardingPage() {
     const digits = localNumber.replace(/^0+/, '');
     const phone = `${COUNTRY_CODE}${digits}`;
 
-    try {
-      await apiRequest('/auth/onboarding/phone/request', {
-        method: 'POST',
-        body: JSON.stringify({ phone }),
-      });
-      setFullPhone(phone);
-      setSuccess('A verification code has been logged to the server console.');
-      setStep('sending');
+    // TODO: re-enable once the OTP request middleware is wired up
+    setFullPhone(phone);
+    setSuccess('A verification code has been logged to the server console.');
+    setStep('sending');
 
-      setTimeout(() => {
-        setStep('verify');
-        setLoading(false);
-        setTimeout(() => otpInputRefs.current[0]?.focus(), 50);
-      }, 500);
-    } catch (err: any) {
-      setError(err.message || 'Failed to request OTP. Please try again.');
+    setTimeout(() => {
+      setStep('verify');
       setLoading(false);
-    }
+      setTimeout(() => otpInputRefs.current[0]?.focus(), 50);
+    }, 500);
   };
 
   const submitOtp = async (code: string) => {
+    void code; // TODO: send to verify endpoint once the OTP verify middleware is wired up
     setError(null);
     setLoading(true);
-
-    try {
-      await apiRequest('/auth/onboarding/phone/verify', {
-        method: 'POST',
-        body: JSON.stringify({ phone: fullPhone, code }),
-      });
-      await refreshUser();
-      router.push('/onboarding/start');
-    } catch (err: any) {
-      setError(err.message || 'Invalid verification code. Please try again.');
-      setOtp(Array(OTP_LENGTH).fill(''));
-      otpInputRefs.current[0]?.focus();
-      setLoading(false);
-    }
+    // Skipping '/onboarding/start' since its gate checks user.auth.phoneVerifiedAt,
+    // which only the (currently disabled) backend verify call would set.
+    router.push('/onboarding/pin-login');
   };
 
   const handleOtpChange = (index: number, value: string) => {

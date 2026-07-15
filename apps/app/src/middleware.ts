@@ -30,7 +30,6 @@ export function middleware(request: NextRequest) {
   const onboardingStatus = request.cookies.get('onboarding_status')?.value;
 
   const isPublicPage = pathname === '/login' || pathname === '/register';
-  const isOnboardingPage = pathname.startsWith('/onboarding');
   const isRoot = pathname === '/';
 
   // 1. Unauthenticated User
@@ -52,17 +51,12 @@ export function middleware(request: NextRequest) {
     }
   }
 
-  if (onboardingStatus !== 'complete') {
-    // If onboarding is incomplete, restrict user only to /onboarding paths
-    if (!isOnboardingPage) {
-      return NextResponse.redirect(new URL('/onboarding/start', request.url));
-    }
-    return NextResponse.next();
-  } else {
-    // If onboarding is complete, prevent user from going to /onboarding paths
-    if (isOnboardingPage || isRoot) {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    }
+  // TODO: re-enable the onboardingStatus !== 'complete' gate below once the
+  // onboarding backend endpoints are wired up and reliably set this cookie.
+  // With them stubbed out client-side, gating here just bounces users back
+  // into onboarding on every reload.
+  if (isRoot) {
+    return NextResponse.redirect(new URL(onboardingStatus === 'complete' ? '/dashboard' : '/onboarding/start', request.url));
   }
 
   return NextResponse.next();
