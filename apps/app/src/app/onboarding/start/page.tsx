@@ -11,11 +11,14 @@ export default function OnboardingStartPage() {
   useEffect(() => {
     if (!user || !user.auth) return;
 
-    const hasPhone = !!user.auth.phoneVerifiedAt;
-    const hasLoginPin = !!user.auth.loginPinSetAt;
-    const hasPaymentPin = !!user.auth.paymentPinSetAt;
+    const hasFullName = !!user.fullName && user.fullName.trim().split(/\s+/).filter(Boolean).length >= 2;
+    const hasPhone = !!user.auth?.phoneVerifiedAt;
+    const hasLoginPin = !!user.auth?.loginPinSetAt;
+    const hasPaymentPin = !!user.auth?.paymentPinSetAt;
 
-    if (!hasPhone) {
+    if (!hasFullName) {
+      router.replace('/onboarding/name');
+    } else if (!hasPhone) {
       router.replace('/onboarding/phone');
     } else if (!hasLoginPin) {
       router.replace('/onboarding/pin-login');

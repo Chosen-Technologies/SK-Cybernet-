@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useRef, useState } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Phone, CheckCircle, ArrowLeft } from 'lucide-react';
 
@@ -16,7 +16,6 @@ export default function PhoneOnboardingPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
-  const otpInputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   const handleRequestOtp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -34,7 +33,10 @@ export default function PhoneOnboardingPage() {
     setTimeout(() => {
       setStep('verify');
       setLoading(false);
-      setTimeout(() => otpInputRefs.current[0]?.focus(), 50);
+      setTimeout(() => {
+        const firstInput = document.getElementById('otp-input-0') as HTMLInputElement;
+        firstInput?.focus();
+      }, 50);
     }, 500);
   };
 
@@ -54,7 +56,8 @@ export default function PhoneOnboardingPage() {
     setOtp(next);
 
     if (digit && index < OTP_LENGTH - 1) {
-      otpInputRefs.current[index + 1]?.focus();
+      const nextInput = document.getElementById(`otp-input-${index + 1}`) as HTMLInputElement;
+      nextInput?.focus();
     }
 
     if (next.every((d) => d !== '')) {
@@ -64,7 +67,8 @@ export default function PhoneOnboardingPage() {
 
   const handleOtpKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
     if (e.key === 'Backspace' && !otp[index] && index > 0) {
-      otpInputRefs.current[index - 1]?.focus();
+      const prevInput = document.getElementById(`otp-input-${index - 1}`) as HTMLInputElement;
+      prevInput?.focus();
     }
   };
 
@@ -78,7 +82,8 @@ export default function PhoneOnboardingPage() {
     setOtp(next);
 
     const lastIndex = Math.min(pasted.length, OTP_LENGTH) - 1;
-    otpInputRefs.current[lastIndex]?.focus();
+    const targetInput = document.getElementById(`otp-input-${lastIndex}`) as HTMLInputElement;
+    targetInput?.focus();
 
     if (pasted.length === OTP_LENGTH) {
       submitOtp(pasted);
@@ -154,9 +159,7 @@ export default function PhoneOnboardingPage() {
             {otp.map((digit, index) => (
               <input
                 key={index}
-                ref={(el) => {
-                  otpInputRefs.current[index] = el;
-                }}
+                id={`otp-input-${index}`}
                 type="text"
                 inputMode="numeric"
                 maxLength={1}
