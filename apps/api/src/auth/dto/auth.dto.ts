@@ -22,10 +22,11 @@ export class LoginDto {
   @IsEmail()
   email!: string;
 
-  @ApiProperty({ example: 'password123' })
+  @ApiProperty({ example: '123456' })
   @IsString()
-  @IsNotEmpty()
-  password!: string;
+  @Length(6, 6, { message: 'Login PIN must be exactly 6 digits' })
+  @Matches(/^\d{6}$/, { message: 'Login PIN must be numeric' })
+  pin!: string;
 }
 
 export class PhoneRequestDto {

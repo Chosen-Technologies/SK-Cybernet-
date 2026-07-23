@@ -59,7 +59,7 @@ export default function WalletPage() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-12">
       {/* Header */}
-      <header className="bg-slate-900 text-white shadow-md">
+      <header className="sticky top-0 z-50 bg-slate-900 text-white shadow-md">
         <div className="max-w-md mx-auto flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2">
             <Wallet className="h-5 w-5 text-blue-500" />

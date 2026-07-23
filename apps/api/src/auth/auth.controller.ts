@@ -1,7 +1,10 @@
-import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res, UseGuards } from '@nestjs/common';
+import { Body, Controller, Get, HttpCode, HttpStatus, Post, Req, Res, UseGuards, UseInterceptors, UploadedFile, BadRequestException } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ApiBearerAuth, ApiOperation, ApiResponse, ApiTags } from '@nestjs/swagger';
 import { Request, Response } from 'express';
+import { FileInterceptor } from '@nestjs/platform-express';
+import { diskStorage } from 'multer';
+import { extname } from 'path';
 import { AuthService } from './auth.service';
 import { ReqUser } from './decorators/user.decorator';
 import { SkipOnboarding } from './decorators/skip-onboarding.decorator';
@@ -57,7 +60,7 @@ export class AuthController {
 
   @Post('login')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Login with email and password' })
+  @ApiOperation({ summary: 'Login with email and 6-digit login PIN' })
   @ApiResponse({ status: 200, description: 'Successfully logged in' })
   async login(@Body() dto: LoginDto, @Res({ passthrough: true }) res: Response) {
     const { user, token } = await this.authService.login(dto);
@@ -165,5 +168,34 @@ export class AuthController {
     const clientUrl = process.env.APP_BASE_URL || 'http://localhost:3001';
     const destination = user?.onboardingStatus === 'complete' ? '/dashboard' : '/onboarding/start';
     res.redirect(`${clientUrl}${destination}`);
+  }
+
+  @Post('avatar')
+  @UseGuards(JwtAuthGuard)
+  @SkipOnboarding()
+  @ApiBearerAuth()
+  @UseInterceptors(
+    FileInterceptor('file', {
+      storage: diskStorage({
+        destination: './uploads',
+        filename: (req: any, file: any, cb: any) => {
+          const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1e9);
+          cb(null, `${file.fieldname}-${uniqueSuffix}${extname(file.originalname)}`);
+        },
+      }),
+    }),
+  )
+  @ApiOperation({ summary: 'Upload user profile picture' })
+  async uploadAvatar(
+    @ReqUser() userPayload: any,
+    @UploadedFile() file: any,
+  ) {
+    if (!file) {
+      throw new BadRequestException('No file uploaded');
+    }
+    const apiBaseUrl = process.env.API_BASE_URL || 'http://localhost:4000';
+    const avatarUrl = `${apiBaseUrl}/uploads/${file.filename}`;
+    await this.authService.updateAvatar(userPayload.id, avatarUrl);
+    return { avatarUrl };
   }
 }

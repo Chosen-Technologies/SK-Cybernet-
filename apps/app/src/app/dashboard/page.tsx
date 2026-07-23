@@ -1,6 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
+import Link from 'next/link';
 import { useAuth } from '@/features/auth/auth-context';
 import { 
   Wallet, 
@@ -20,7 +21,8 @@ import {
   Share2,
   TrendingDown,
   TrendingUp,
-  CreditCard
+  CreditCard,
+  X
 } from 'lucide-react';
 import BookingModal from '@/components/booking/BookingModal';
 
@@ -35,11 +37,27 @@ export default function DashboardPage() {
   const [studentStatus, setStudentStatus] = useState<string | null>(null);
   const [selectedTier, setSelectedTier] = useState<{ name: string; cost: number; duration: string } | null>(null);
   const [isBookingOpen, setIsBookingOpen] = useState(false);
-  const [showUploadModal, setShowUploadModal] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   const [showFundModal, setShowFundModal] = useState(false);
   const [fundAmount, setFundAmount] = useState('');
   const [isFunding, setIsFunding] = useState(false);
+  
+  // Onboarding modal state for Google users
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false);
+
+  useEffect(() => {
+    if (user && user.authProvider === 'google') {
+      const isMissingSecurity = !user.phone || !user.auth?.phoneVerifiedAt || !user.auth?.loginPinSetAt || !user.auth?.paymentPinSetAt;
+      const isDismissed = sessionStorage.getItem('onboarding_modal_dismissed') === 'true';
+      if (isMissingSecurity && !isDismissed) {
+        setShowOnboardingModal(true);
+      }
+    }
+  }, [user]);
+
+  const handleCloseOnboardingModal = () => {
+    setShowOnboardingModal(false);
+    sessionStorage.setItem('onboarding_modal_dismissed', 'true');
+  };
 
   // 20-second timer to switch header text from "Welcome back" to tier level
   useEffect(() => {
@@ -66,7 +84,8 @@ export default function DashboardPage() {
 
   const currentCredits = localCredits !== null ? localCredits : (user.wallet?.availableCredits ?? 75.0);
   const currentStudentStatus = studentStatus !== null ? studentStatus : (user.studentStatus ?? 'unverified');
-  const userTier = currentStudentStatus === 'verified' ? 'Student Discount Tier' : 'Standard Access Tier';
+  const kycLevel = user.kycLevel ?? '1';
+  const kycTierName = kycLevel === '3' ? 'Premium' : kycLevel === '2' ? 'Standard' : 'Starters';
 
   // Transaction Ledger (mocked to represent 3 recent transactions)
   const recentTransactions = [
@@ -118,15 +137,6 @@ export default function DashboardPage() {
     });
   };
 
-  const handleUploadStudentId = (e: React.FormEvent) => {
-    e.preventDefault();
-    setIsUploading(true);
-    setTimeout(() => {
-      setStudentStatus('pending_review');
-      setIsUploading(false);
-      setShowUploadModal(false);
-    }, 1500);
-  };
 
   const handleFundWallet = (e: React.FormEvent) => {
     e.preventDefault();
@@ -148,11 +158,11 @@ export default function DashboardPage() {
   return (
     <div className="min-h-screen bg-slate-50 font-sans pb-16">
       {/* Top Navbar */}
-      <header className="bg-slate-900 text-white shadow-md">
+      <header className="sticky top-0 z-50 bg-slate-900 text-white shadow-md">
         <div className="max-w-md mx-auto flex items-center justify-between px-6 py-4">
           <div className="flex items-center gap-3">
             {/* Google Profile Avatar */}
-            <div className="h-10 w-10 rounded-full border border-slate-700 overflow-hidden shrink-0">
+            <Link href="/profile" className="h-10 w-10 rounded-full border border-slate-700 overflow-hidden shrink-0 block hover:opacity-80 transition-opacity">
               <img 
                 src={profileAvatarUrl} 
                 alt="Profile Avatar" 
@@ -162,10 +172,11 @@ export default function DashboardPage() {
                   (e.target as HTMLImageElement).src = `https://ui-avatars.com/api/?name=${encodeURIComponent(user.fullName || 'User')}&background=3b82f6&color=fff`;
                 }}
               />
-            </div>
+            </Link>
             <div className="flex flex-col">
-              <span className="text-xs text-slate-400 font-medium">
-                {showWelcomeBack ? 'Welcome back' : userTier}
+              <span className="text-sm font-semibold text-white">Welcome, {user.fullName.split(' ')[0]}</span>
+              <span className="text-[10px] text-slate-400 font-medium tracking-wide">
+                Account Tier: <span className="text-blue-400 font-bold">{kycTierName}</span>
               </span>
             </div>
           </div>
@@ -197,12 +208,12 @@ export default function DashboardPage() {
               <p className="text-xs text-amber-700 mt-0.5">
                 Verify your student credentials to save up to 20% on Weekly and Monthly hub subscription passes.
               </p>
-              <button
-                onClick={() => setShowUploadModal(true)}
-                className="mt-3 text-xs font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 py-1.5 px-3 rounded-lg border border-amber-200 transition-colors"
+              <Link
+                href="/profile/verify-studentship"
+                className="inline-block mt-3 text-xs font-bold text-amber-900 bg-amber-100 hover:bg-amber-200 py-1.5 px-3 rounded-lg border border-amber-200 transition-colors"
               >
                 Upload Student ID Card
-              </button>
+              </Link>
             </div>
           </div>
         )}
@@ -430,32 +441,71 @@ export default function DashboardPage() {
         </div>
       )}
 
-      {/* Upload Student ID Modal */}
-      {showUploadModal && (
-        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 p-4">
+
+      {/* Complete Onboarding Modal */}
+      {showOnboardingModal && (
+        <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-slate-900/60 backdrop-blur-xs p-4">
           <div className="bg-white w-full max-w-sm rounded-t-2xl sm:rounded-2xl p-6 shadow-xl space-y-5 relative border border-slate-100">
-            <div className="flex justify-between items-center border-b border-slate-100 pb-3">
-              <h3 className="font-heading font-bold text-slate-900 text-lg">Verify Student Status</h3>
-              <button onClick={() => setShowUploadModal(false)} className="text-slate-400 hover:text-slate-600">
-                Cancel
-              </button>
+            <button 
+              onClick={handleCloseOnboardingModal}
+              className="absolute top-4 right-4 text-slate-400 hover:text-slate-600 transition-colors p-1"
+              aria-label="Close modal"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
+            <div className="text-center space-y-2 pt-2">
+              <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-blue-50 text-blue-600 border border-blue-100">
+                <Lock className="h-6 w-6" />
+              </div>
+              <h3 className="font-heading font-bold text-slate-900 text-lg">Complete Security Onboarding</h3>
+              <p className="text-xs text-slate-500 leading-relaxed">
+                Get the full SK Cybernet experience by completing your security configuration. Protect your wallet and enable quick logins.
+              </p>
             </div>
 
-            <form onSubmit={handleUploadStudentId} className="space-y-4">
-              <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 text-center space-y-2 hover:border-blue-400 transition-colors cursor-pointer">
-                <UploadCloud className="h-8 w-8 text-slate-400 mx-auto" />
-                <p className="text-xs font-semibold text-slate-700">Drag & drop or tap to upload</p>
-                <p className="text-[10px] text-slate-400">PDF, PNG, or JPG (max. 5MB)</p>
+            <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-100">
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-600 font-medium">Phone Verification</span>
+                {user.phone && user.auth?.phoneVerifiedAt ? (
+                  <span className="text-emerald-600 font-bold flex items-center gap-1">✓ Verified</span>
+                ) : (
+                  <span className="text-amber-600 font-bold flex items-center gap-1">⚠️ Missing</span>
+                )}
               </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-600 font-medium">Login PIN (6-Digit)</span>
+                {user.auth?.loginPinSetAt ? (
+                  <span className="text-emerald-600 font-bold flex items-center gap-1">✓ Configured</span>
+                ) : (
+                  <span className="text-amber-600 font-bold flex items-center gap-1">⚠️ Missing</span>
+                )}
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <span className="text-slate-600 font-medium">Payment PIN (4-Digit)</span>
+                {user.auth?.paymentPinSetAt ? (
+                  <span className="text-emerald-600 font-bold flex items-center gap-1">✓ Configured</span>
+                ) : (
+                  <span className="text-amber-600 font-bold flex items-center gap-1">⚠️ Missing</span>
+                )}
+              </div>
+            </div>
 
-              <button
-                type="submit"
-                disabled={isUploading}
-                className="w-full py-2.5 bg-slate-900 hover:bg-slate-800 text-white rounded-xl text-sm font-semibold transition-colors disabled:bg-slate-400"
+            <div className="flex flex-col gap-2 pt-2">
+              <Link
+                href="/onboarding/start"
+                onClick={handleCloseOnboardingModal}
+                className="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-center text-sm transition-colors flex justify-center items-center gap-2"
               >
-                {isUploading ? 'Uploading credentials...' : 'Submit Verification Request'}
+                Configure Security Now
+              </Link>
+              <button
+                onClick={handleCloseOnboardingModal}
+                className="w-full py-2.5 rounded-xl border border-slate-200 hover:bg-slate-50 text-slate-500 hover:text-slate-800 font-semibold text-xs transition-colors"
+              >
+                Maybe Later
               </button>
-            </form>
+            </div>
           </div>
         </div>
       )}

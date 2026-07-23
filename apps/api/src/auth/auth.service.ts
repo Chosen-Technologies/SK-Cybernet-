@@ -64,21 +64,22 @@ export class AuthService {
       include: { auth: true },
     });
 
-    if (!user || !user.auth || !user.auth.passwordHash) {
-      throw new UnauthorizedException('Invalid email or password');
+    if (!user || !user.auth || !user.auth.loginPinHash) {
+      throw new UnauthorizedException('Invalid email or PIN');
     }
 
     if (user.isSuspended) {
       throw new UnauthorizedException('Your account has been suspended. Please contact support.');
     }
 
-    const isMatch = await bcrypt.compare(dto.password, user.auth.passwordHash);
+    const isMatch = await bcrypt.compare(dto.pin, user.auth.loginPinHash);
     if (!isMatch) {
-      throw new UnauthorizedException('Invalid email or password');
+      throw new UnauthorizedException('Invalid email or PIN');
     }
 
     const token = this.generateToken(user);
-    return { user, token };
+    const { auth, ...safeUser } = user;
+    return { user: safeUser, token };
   }
 
   async googleLogin(profile: { email: string; fullName: string }) {
@@ -98,7 +99,7 @@ export class AuthService {
             email: profile.email,
             fullName: profile.fullName,
             authProvider: 'google',
-            onboardingStatus: OnboardingStatus.incomplete,
+            onboardingStatus: OnboardingStatus.complete,
           },
         });
 
@@ -121,10 +122,18 @@ export class AuthService {
           include: { auth: true },
         }) as any;
       });
+    } else if (user.authProvider === 'google' && user.onboardingStatus !== OnboardingStatus.complete) {
+      // Update existing Google users to have complete onboardingStatus
+      user = await this.prisma.user.update({
+        where: { id: user.id },
+        data: { onboardingStatus: OnboardingStatus.complete },
+        include: { auth: true },
+      });
     }
 
     const token = this.generateToken(user!);
-    return { user, token };
+    const { auth, ...safeUser } = user!;
+    return { user: { ...safeUser, onboardingStatus: OnboardingStatus.complete }, token };
   }
 
   async getMe(userId: string) {
@@ -293,5 +302,12 @@ export class AuthService {
     }
 
     return false;
+  }
+
+  async updateAvatar(userId: string, avatarUrl: string) {
+    return this.prisma.user.update({
+      where: { id: userId },
+      data: { avatarUrl },
+    });
   }
 }

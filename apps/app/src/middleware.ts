@@ -43,20 +43,12 @@ export function middleware(request: NextRequest) {
 
   // 2. Authenticated User
   if (isPublicPage) {
-    // If already logged in, redirect to dashboard or onboarding
-    if (onboardingStatus === 'complete') {
-      return NextResponse.redirect(new URL('/dashboard', request.url));
-    } else {
-      return NextResponse.redirect(new URL('/onboarding/start', request.url));
-    }
+    // If already logged in, redirect straight to dashboard
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
-  // TODO: re-enable the onboardingStatus !== 'complete' gate below once the
-  // onboarding backend endpoints are wired up and reliably set this cookie.
-  // With them stubbed out client-side, gating here just bounces users back
-  // into onboarding on every reload.
   if (isRoot) {
-    return NextResponse.redirect(new URL(onboardingStatus === 'complete' ? '/dashboard' : '/onboarding/start', request.url));
+    return NextResponse.redirect(new URL('/dashboard', request.url));
   }
 
   return NextResponse.next();

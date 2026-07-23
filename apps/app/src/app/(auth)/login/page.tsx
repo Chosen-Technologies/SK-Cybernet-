@@ -8,17 +8,23 @@ import { KeyRound, Mail, LogIn } from 'lucide-react';
 export default function LoginPage() {
   const { login } = useAuth();
   const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [pin, setPin] = useState('');
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError(null);
+
+    if (pin.length !== 6 || !/^\d+$/.test(pin)) {
+      setError('PIN must be a 6-digit numeric code.');
+      return;
+    }
+
     setLoading(true);
 
     try {
-      await login({ email, password });
+      await login({ email, pin });
     } catch (err: any) {
       setError(err.message || 'Login failed. Please check your credentials.');
       setLoading(false);
@@ -72,22 +78,25 @@ export default function LoginPage() {
             </div>
 
             <div>
-              <label htmlFor="password" className="sr-only">
-                Password
+              <label htmlFor="pin" className="sr-only">
+                Login PIN
               </label>
               <div className="relative">
                 <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                   <KeyRound className="h-5 w-5 text-slate-400" />
                 </div>
                 <input
-                  id="password"
-                  name="password"
+                  id="pin"
+                  name="pin"
                   type="password"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  maxLength={6}
                   required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  className="block w-full rounded-lg border border-slate-200 py-3 pl-10 pr-3 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm"
-                  placeholder="Password"
+                  value={pin}
+                  onChange={(e) => setPin(e.target.value.replace(/\D/g, ''))}
+                  className="block w-full rounded-lg border border-slate-200 py-3 pl-10 pr-3 text-slate-900 placeholder-slate-400 focus:border-blue-500 focus:outline-none focus:ring-1 focus:ring-blue-500 sm:text-sm tracking-[0.5em]"
+                  placeholder="6-digit PIN"
                 />
               </div>
             </div>

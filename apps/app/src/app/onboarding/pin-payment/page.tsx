@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { ShieldCheck, ShieldAlert, Eye, EyeOff } from 'lucide-react';
+import { apiRequest } from '@/lib/api';
 
 export default function PinPaymentOnboardingPage() {
   const router = useRouter();
@@ -38,11 +39,20 @@ export default function PinPaymentOnboardingPage() {
 
     setLoading(true);
 
-    // TODO: send to /auth/onboarding/pin/payment once the middleware is wired up.
-    // Also set the onboarding_status cookie client-side (normally set by that
-    // endpoint's response) so the Next.js middleware lets us through to /dashboard.
-    document.cookie = 'onboarding_status=complete; path=/';
-    router.push('/dashboard');
+    try {
+      await apiRequest('/auth/onboarding/pin/payment', {
+        method: 'POST',
+        body: JSON.stringify({ pin }),
+      });
+      router.push('/dashboard');
+    } catch (err: any) {
+      setError(err.message || 'Failed to configure payment PIN. Please try again.');
+      setPin('');
+      setConfirmPin('');
+      setStage('enter');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

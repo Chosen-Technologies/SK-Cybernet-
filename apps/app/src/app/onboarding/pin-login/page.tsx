@@ -3,6 +3,7 @@
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { KeyRound, ShieldAlert, Eye, EyeOff } from 'lucide-react';
+import { apiRequest } from '@/lib/api';
 
 export default function PinLoginOnboardingPage() {
   const router = useRouter();
@@ -38,8 +39,20 @@ export default function PinLoginOnboardingPage() {
 
     setLoading(true);
 
-    // TODO: send to /auth/onboarding/pin/login once the middleware is wired up
-    router.push('/onboarding/pin-payment');
+    try {
+      await apiRequest('/auth/onboarding/pin/login', {
+        method: 'POST',
+        body: JSON.stringify({ pin }),
+      });
+      router.push('/onboarding/pin-payment');
+    } catch (err: any) {
+      setError(err.message || 'Failed to configure login PIN. Please try again.');
+      setPin('');
+      setConfirmPin('');
+      setStage('enter');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (

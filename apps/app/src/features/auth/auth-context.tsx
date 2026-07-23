@@ -11,6 +11,8 @@ interface AuthContextType {
   register: (dto: any) => Promise<void>;
   logout: () => Promise<void>;
   refreshUser: () => Promise<void>;
+  updateUserLocal: (updatedFields: Partial<any>) => void;
+  uploadAvatar: (file: File) => Promise<string>;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
@@ -23,7 +25,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const refreshUser = async () => {
     try {
       const data = await apiRequest('/auth/me');
-      setUser(data);
+      const storedKycLevel = typeof window !== 'undefined' ? (localStorage.getItem('profile_kyc_level') ?? '1') : '1';
+      const storedStudentStatus = typeof window !== 'undefined' ? (localStorage.getItem('student_status') ?? 'unverified') : 'unverified';
+      setUser({ ...data, kycLevel: storedKycLevel, studentStatus: storedStudentStatus });
     } catch (error) {
       setUser(null);
       try {
@@ -51,7 +55,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         method: 'POST',
         body: JSON.stringify(dto),
       });
-      setUser(data.user);
+      const storedKycLevel = typeof window !== 'undefined' ? (localStorage.getItem('profile_kyc_level') ?? '1') : '1';
+      const storedStudentStatus = typeof window !== 'undefined' ? (localStorage.getItem('student_status') ?? 'unverified') : 'unverified';
+      setUser({ ...data.user, kycLevel: storedKycLevel, studentStatus: storedStudentStatus });
       if (data.user.onboardingStatus === 'complete') {
         router.push('/dashboard');
       } else {
@@ -70,7 +76,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         method: 'POST',
         body: JSON.stringify(dto),
       });
-      setUser(data.user);
+      const storedKycLevel = typeof window !== 'undefined' ? (localStorage.getItem('profile_kyc_level') ?? '1') : '1';
+      const storedStudentStatus = typeof window !== 'undefined' ? (localStorage.getItem('student_status') ?? 'unverified') : 'unverified';
+      setUser({ ...data.user, kycLevel: storedKycLevel, studentStatus: storedStudentStatus });
       router.push('/onboarding/start');
     } catch (error) {
       setLoading(false);
@@ -91,8 +99,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
+  const updateUserLocal = (updatedFields: Partial<any>) => {
+    setUser((prev: any) => {
+      if (!prev) return null;
+      if (updatedFields.kycLevel && typeof window !== 'undefined') {
+        localStorage.setItem('profile_kyc_level', updatedFields.kycLevel);
+      }
+      if (updatedFields.studentStatus && typeof window !== 'undefined') {
+        localStorage.setItem('student_status', updatedFields.studentStatus);
+      }
+      return { ...prev, ...updatedFields };
+    });
+  };
+
+  const uploadAvatar = async (file: File): Promise<string> => {
+    const formData = new FormData();
+    formData.append('file', file);
+    try {
+      const data = await apiRequest('/auth/avatar', {
+        method: 'POST',
+        body: formData,
+      });
+      setUser((prev: any) => (prev ? { ...prev, avatarUrl: data.avatarUrl } : null));
+      return data.avatarUrl;
+    } catch (error) {
+      console.error('Avatar upload failed:', error);
+      throw error;
+    }
+  };
+
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, refreshUser, updateUserLocal, uploadAvatar }}>
       {children}
     </AuthContext.Provider>
   );

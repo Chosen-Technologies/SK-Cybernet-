@@ -5,9 +5,18 @@ import { ValidationPipe } from '@nestjs/common';
 import { HttpExceptionFilter } from './common/filters/http-exception.filter';
 import { DocumentBuilder, SwaggerModule } from '@nestjs/swagger';
 import cookieParser from 'cookie-parser';
+import express from 'express';
+import path from 'path';
+import fs from 'fs';
 
 async function bootstrap() {
   const app = await NestFactory.create(AppModule);
+
+  const uploadDir = path.join(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadDir)) {
+    fs.mkdirSync(uploadDir, { recursive: true });
+  }
+  app.use('/uploads', express.static(uploadDir));
 
   app.enableCors({
     origin: [process.env.WEB_BASE_URL, process.env.APP_BASE_URL, process.env.ADMIN_BASE_URL].filter(
