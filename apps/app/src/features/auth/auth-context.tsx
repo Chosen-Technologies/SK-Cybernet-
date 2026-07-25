@@ -22,12 +22,25 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  const saveUserProfile = (userData: any) => {
+    if (typeof window !== 'undefined' && userData) {
+      const profile = {
+        email: userData.email,
+        fullName: userData.fullName,
+        avatarUrl: userData.avatarUrl,
+      };
+      localStorage.setItem('last_user_profile', JSON.stringify(profile));
+    }
+  };
+
   const refreshUser = async () => {
     try {
       const data = await apiRequest('/auth/me');
       const storedKycLevel = typeof window !== 'undefined' ? (localStorage.getItem('profile_kyc_level') ?? '1') : '1';
       const storedStudentStatus = typeof window !== 'undefined' ? (localStorage.getItem('student_status') ?? 'unverified') : 'unverified';
-      setUser({ ...data, kycLevel: storedKycLevel, studentStatus: storedStudentStatus });
+      const updatedUser = { ...data, kycLevel: storedKycLevel, studentStatus: storedStudentStatus };
+      setUser(updatedUser);
+      saveUserProfile(updatedUser);
     } catch (error) {
       setUser(null);
       try {
@@ -57,7 +70,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       const storedKycLevel = typeof window !== 'undefined' ? (localStorage.getItem('profile_kyc_level') ?? '1') : '1';
       const storedStudentStatus = typeof window !== 'undefined' ? (localStorage.getItem('student_status') ?? 'unverified') : 'unverified';
-      setUser({ ...data.user, kycLevel: storedKycLevel, studentStatus: storedStudentStatus });
+      const updatedUser = { ...data.user, kycLevel: storedKycLevel, studentStatus: storedStudentStatus };
+      setUser(updatedUser);
+      saveUserProfile(updatedUser);
       if (data.user.onboardingStatus === 'complete') {
         router.push('/dashboard');
       } else {
@@ -78,7 +93,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       });
       const storedKycLevel = typeof window !== 'undefined' ? (localStorage.getItem('profile_kyc_level') ?? '1') : '1';
       const storedStudentStatus = typeof window !== 'undefined' ? (localStorage.getItem('student_status') ?? 'unverified') : 'unverified';
-      setUser({ ...data.user, kycLevel: storedKycLevel, studentStatus: storedStudentStatus });
+      const updatedUser = { ...data.user, kycLevel: storedKycLevel, studentStatus: storedStudentStatus };
+      setUser(updatedUser);
+      saveUserProfile(updatedUser);
       router.push('/onboarding/start');
     } catch (error) {
       setLoading(false);
@@ -91,6 +108,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       await apiRequest('/auth/logout', { method: 'POST' });
       setUser(null);
+      if (typeof window !== 'undefined') {
+        localStorage.removeItem('last_user_profile');
+      }
       router.push('/login?clear=true');
     } catch (error) {
       console.error('Logout error:', error);
@@ -108,7 +128,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       if (updatedFields.studentStatus && typeof window !== 'undefined') {
         localStorage.setItem('student_status', updatedFields.studentStatus);
       }
-      return { ...prev, ...updatedFields };
+      const updated = { ...prev, ...updatedFields };
+      saveUserProfile(updated);
+      return updated;
     });
   };
 
@@ -120,7 +142,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         method: 'POST',
         body: formData,
       });
-      setUser((prev: any) => (prev ? { ...prev, avatarUrl: data.avatarUrl } : null));
+      setUser((prev: any) => {
+        if (!prev) return null;
+        const updated = { ...prev, avatarUrl: data.avatarUrl };
+        saveUserProfile(updated);
+        return updated;
+      });
       return data.avatarUrl;
     } catch (error) {
       console.error('Avatar upload failed:', error);

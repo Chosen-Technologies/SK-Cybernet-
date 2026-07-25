@@ -493,7 +493,7 @@ export default function DashboardPage() {
 
             <div className="flex flex-col gap-2 pt-2">
               <Link
-                href="/onboarding/start"
+                href="/profile/settings"
                 onClick={handleCloseOnboardingModal}
                 className="w-full py-3 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-semibold text-center text-sm transition-colors flex justify-center items-center gap-2"
               >

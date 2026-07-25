@@ -112,7 +112,7 @@ export default function ProfilePage() {
     { name: 'Next of Kin', icon: Users, href: '/profile/placeholder?title=Next+of+Kin' },
     { name: 'Notification', icon: Bell, href: '/profile/placeholder?title=Notification' },
     { name: 'Help & Support', icon: HelpCircle, href: '/profile/placeholder?title=Help+and+Support' },
-    { name: 'Settings', icon: SettingsIcon, href: '/profile/placeholder?title=Settings' },
+    { name: 'Settings', icon: SettingsIcon, href: '/profile/settings' },
   ];
 
   return (
