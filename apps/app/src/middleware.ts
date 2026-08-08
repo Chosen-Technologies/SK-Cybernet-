@@ -17,10 +17,15 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
+  // Redirect legacy login page to register?mode=login
+  if (pathname === '/login') {
+    return NextResponse.redirect(new URL('/register?mode=login', request.url));
+  }
+
   const hasClearParam = request.nextUrl.searchParams.has('clear') || request.nextUrl.searchParams.has('logout');
 
   if (hasClearParam) {
-    const response = NextResponse.redirect(new URL('/login', request.url));
+    const response = NextResponse.redirect(new URL('/register?mode=login', request.url));
     response.cookies.delete('access_token');
     response.cookies.delete('onboarding_status');
     return response;
@@ -29,14 +34,14 @@ export function middleware(request: NextRequest) {
   const token = request.cookies.get('access_token')?.value;
   const onboardingStatus = request.cookies.get('onboarding_status')?.value;
 
-  const isPublicPage = pathname === '/login' || pathname === '/register';
+  const isPublicPage = pathname === '/register';
   const isRoot = pathname === '/';
 
   // 1. Unauthenticated User
   if (!token) {
-    // If trying to access protected or onboarding pages, redirect to login
+    // If trying to access protected or onboarding pages, redirect to register?mode=login
     if (!isPublicPage && !isRoot) {
-      return NextResponse.redirect(new URL('/login', request.url));
+      return NextResponse.redirect(new URL('/register?mode=login', request.url));
     }
     return NextResponse.next();
   }
