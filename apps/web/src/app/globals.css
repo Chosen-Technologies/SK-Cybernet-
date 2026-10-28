@@ -24,3 +24,137 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.site-nav-wrap {
+  position: sticky;
+  z-index: 10;
+  top: 0;
+  padding: 1.25rem 1.5rem;
+}
+
+.site-nav {
+  display: flex;
+  width: min(100%, 76rem);
+  min-height: 4.5rem;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 0 auto;
+  padding: 0.65rem 0.75rem 0.65rem 1.15rem;
+  border: 1px solid #e8edf1;
+  border-radius: 999px;
+  background: rgb(255 255 255 / 94%);
+  box-shadow: 0 10px 32px rgb(15 23 42 / 6%);
+  backdrop-filter: blur(16px);
+}
+
+.site-brand {
+  display: inline-flex;
+  flex: 0 0 auto;
+  align-items: center;
+  gap: 0.65rem;
+  color: #102a36;
+  font-size: 0.87rem;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.site-brand strong {
+  font-weight: 800;
+  letter-spacing: 0.08em;
+}
+
+.site-brand-mark {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border-radius: 50%;
+  background: #e7fbf6;
+  color: #078b70;
+}
+
+.site-nav-links {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: clamp(0.75rem, 2vw, 2rem);
+}
+
+.site-nav-links a {
+  color: #53636d;
+  font-size: 0.9rem;
+  font-weight: 550;
+  text-decoration: none;
+  transition: color 160ms ease;
+  white-space: nowrap;
+}
+
+.site-nav-links a:hover {
+  color: #078b70;
+}
+
+.site-nav-cta {
+  display: inline-flex;
+  flex: 0 0 auto;
+  min-height: 2.9rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.55rem;
+  padding: 0 1.15rem;
+  border-radius: 999px;
+  background: #087f67;
+  color: #fff;
+  font-size: 0.9rem;
+  font-weight: 650;
+  text-decoration: none;
+  transition: background 160ms ease, transform 160ms ease;
+}
+
+.site-nav-cta:hover {
+  transform: translateY(-1px);
+  background: #066b57;
+}
+
+@media (max-width: 700px) {
+  .site-nav-wrap {
+    padding: 0.75rem;
+  }
+
+  .site-nav {
+    flex-wrap: wrap;
+    justify-content: space-between;
+    padding: 0.6rem;
+    border-radius: 1.5rem;
+  }
+
+  .site-brand {
+    font-size: 0.78rem;
+  }
+
+  .site-brand-mark {
+    width: 2.25rem;
+    height: 2.25rem;
+  }
+
+  .site-nav-cta {
+    min-height: 2.6rem;
+    padding: 0 0.9rem;
+    font-size: 0.82rem;
+  }
+
+  .site-nav-links {
+    order: 3;
+    width: 100%;
+    justify-content: space-around;
+    gap: 0.4rem;
+    padding: 0.75rem 0.25rem 0.25rem;
+    border-top: 1px solid #edf1f3;
+  }
+
+  .site-nav-links a {
+    font-size: 0.75rem;
+  }
+}

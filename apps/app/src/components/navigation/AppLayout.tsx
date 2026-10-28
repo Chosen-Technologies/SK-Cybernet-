@@ -20,11 +20,23 @@ export default function AppLayout({ children }: { children: React.ReactNode }) {
     pathname?.startsWith('/onboarding');
 
   return (
-    <div className={`min-h-screen bg-slate-50 flex flex-col ${isNoShellRoute ? '' : 'pb-20'}`}>
-      <div className="flex-1">
-        {children}
+    <>
+      <div className="mobile-app min-h-screen bg-slate-50 flex flex-col">
+        <div className={`flex-1 ${isNoShellRoute ? '' : 'pb-20'}`}>
+          {children}
+        </div>
+        {!isNoShellRoute && <BottomNav />}
       </div>
-      {!isNoShellRoute && <BottomNav />}
-    </div>
+      <main className="wide-screen-message" aria-label="Mobile device required">
+        <div className="wide-screen-card">
+          <div className="wide-screen-icon" aria-hidden="true">↔</div>
+          <p className="wide-screen-eyebrow">SK Cybernet</p>
+          <h1>Made for mobile</h1>
+          <p className="wide-screen-copy">
+            Open this app on a mobile device or tablet for the best experience.
+          </p>
+        </div>
+      </main>
+    </>
   );
 }
