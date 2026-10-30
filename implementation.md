@@ -5,6 +5,8 @@ Status: Draft v1.0
 Date: July 2026  
 Document purpose: Engineering implementation reference
 
+> This is a product-level implementation reference. The user app now lives at this repository root; the API, admin console, and marketing site are separate standalone projects. Any monorepo or shared-package layout described below is historical and is not active configuration.
+
 ## 1. Overview
 
 SK Cybernet is a mobile-first Progressive Web App (PWA) for flexible hub and workspace access. The platform replaces rigid subscription plans with a wallet-funded credit system. Users fund a wallet, settled balances are automatically converted into platform credits, users redeem those credits for Daily, Weekly, or Monthly hub bookings, and receive passes with a QR code. When the admin scans this QR code upon the user's arrival at the hub, the system automatically generates a 10-digit internet connection access coupon code.

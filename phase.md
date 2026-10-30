@@ -1,5 +1,7 @@
 # SK Cybernet Phased Implementation Master Plan
 
+> Historical checklist: completed items describe the original monorepo setup. The user app now lives at this repository root, while the API, admin console, and marketing site are standalone projects; the Turbo workspace and shared packages are no longer present.
+
 This document breaks down the implementation of SK Cybernet into granular, sub-indexed execution steps. It is derived from [implementation.md](file:///c:/Users/admin/Desktop/SK%20Cybernet/implementation.md) and represents the master blueprint for the engineering team.
 
 ---
